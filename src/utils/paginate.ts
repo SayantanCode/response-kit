@@ -1,8 +1,8 @@
 // File: src/utils/paginate.ts
 
 import {
-  PaginatedResult,
-  CursorPaginatedResult,
+  IPaginatedResult,
+  ICursorPaginatedResult,
 } from "../interface/pagination";
 
 /**
@@ -12,7 +12,7 @@ export const paginateArray = <T>(
   array: T[],
   page: number = 1,
   limit: number = 10
-): PaginatedResult<T> => {
+): IPaginatedResult<T> => {
   const total = array.length;
   const totalPages = Math.ceil(total / limit);
   const start = (page - 1) * limit;
@@ -34,7 +34,7 @@ export const paginateArray = <T>(
 /**
  * Pagination utility for Mongoose or any DB query (page-based)
  */
-export const paginateQuery = async <T>(
+export const paginateMongooseQuery = async <T>(
   model: any,
   query: Record<string, any> = {},
   options: {
@@ -44,7 +44,7 @@ export const paginateQuery = async <T>(
     select?: string;
     populate?: string;
   } = {}
-): Promise<PaginatedResult<T>> => {
+): Promise<IPaginatedResult<T>> => {
   const page = parseInt(String(options.page)) || 1;
   const limit = parseInt(String(options.limit)) || 10;
   const skip = (page - 1) * limit;
@@ -88,7 +88,7 @@ export const paginateCursor = async <T>(
     cursorValue?: any;
     direction?: string;
   } = {}
-): Promise<CursorPaginatedResult<T>> => {
+): Promise<ICursorPaginatedResult<T>> => {
   const limit = parseInt(String(options.limit)) || 10;
   const sort = options.sort || { _id: 1 };
   const cursorField = options.cursorField || "_id";

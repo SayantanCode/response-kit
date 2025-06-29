@@ -1,6 +1,6 @@
 //File: src/types/pagination.ts
 
-export interface PaginationMeta {
+export interface IPaginationMeta {
   total: number;
   page: number;
   limit: number;
@@ -9,12 +9,12 @@ export interface PaginationMeta {
   hasPrevPage: boolean;
 }
 
-export interface PaginatedResult<T> {
+export interface IPaginatedResult<T> {
   data: T[];
-  meta: PaginationMeta;
+  meta: IPaginationMeta;
 }
 
-export interface CursorPaginationMeta {
+export interface ICursorPaginationMeta {
   limit: number;
   cursorField: string;
   nextCursor: any;
@@ -22,7 +22,7 @@ export interface CursorPaginationMeta {
   direction: number;
 }
 
-export interface CursorPaginatedResult<T> {
+export interface ICursorPaginatedResult<T> {
   data: T[];
-  meta: CursorPaginationMeta;
+  meta: ICursorPaginationMeta;
 }
