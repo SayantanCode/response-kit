@@ -1,4 +1,5 @@
-export interface ResponseConfig {
+export interface IResponseConfig {
+  safeInput: boolean; // globally enable safe input
   successKey: string;
   messageKey: string;
   dataKey: string;
@@ -27,6 +28,7 @@ export interface SuccessResponseOptions {
   message?: string;
   statusCode?: number;
   meta?: any;
+  [key: string]: any; // allow additional properties
 }
 
 export interface CreateResponseOptions {
