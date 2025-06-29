@@ -1,6 +1,9 @@
 // File: src/utils/paginate.ts
 
-import { PaginatedResult, CursorPaginatedResult } from '../types/pagination';
+import {
+  PaginatedResult,
+  CursorPaginatedResult,
+} from "../interface/pagination";
 
 /**
  * Pagination utility for arrays
