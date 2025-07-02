@@ -522,7 +522,7 @@ declare global {
        * @param meta 
        * @example <caption>Using data directly</caption>
        * res.success({ id: 1, name: "Item" }, "Item found", 200, { total: 1 });
-       * @example <caption>Using an options object</caption>
+       * @example <caption>Using an options object(Note use keys according to your config)</caption>
        * res.success({ data: { id: 1, name: "Item" }, message: "Item found", statusCode: 200, meta: { total: 1 } });
        */
       success: (
@@ -538,7 +538,7 @@ declare global {
        * @param meta 
        * @example <caption>Using data directly</caption>
        * res.created({ id: 1, name: "Item" }, "Item created", { total: 1 });
-       * @example <caption>Using an options object</caption>
+       * @example <caption>Using an options object (Note use keys according to your config)</caption>
        * res.created({ data: { id: 1, name: "Item" }, message: "Item created", meta: { total: 1 } });
        */
       created: (
@@ -554,7 +554,7 @@ declare global {
        * @param meta 
        * @example <caption>Using data directly</caption>
        * res.updated({ id: 1, name: "Item" }, "Item updated", { total: 1 });
-       * @example <caption>Using an options object</caption>
+       * @example <caption>Using an options object(Note use keys according to your config)</caption>
        * res.updated({ data: { id: 1, name: "Item" }, message: "Item updated", meta: { total: 1 } });
        */
       updated: (
@@ -569,22 +569,71 @@ declare global {
        * @param statusCode
        * @example <caption>Using a custom message</caption>
        * res.deleted("Item deleted", 200);
-       * @example <caption>Using an options object</caption>
+       * @example <caption>Using an options object(Note use keys according to your config)</caption>
        * res.deleted({ message: "Item deleted", statusCode: 200 });
        */
       deleted: (message?: string, statusCode?: number) => void;
+      /**
+       * Send an error response with a message, status code, and optional errors.
+       * @param message 
+       * @param statusCode 
+       * @param errors 
+       * @example <caption>Using a custom message</caption>
+       * res.error("Something went wrong", 500, [{ field: "name", message: "Name is required" }]);
+       * @example <caption>Using an options object(Note use keys according to your config)</caption>
+       * res.error({ message: "Something went wrong", statusCode: 500, errors: [...] });
+       */
       error: (message?: string, statusCode?: number, errors?: any[]) => void;
+      /**
+       * Send a 400 Bad Request response with optional errors and message.
+       * @param errors 
+       * @param message 
+       * @param statusCode 
+       * @example <caption>Using a list of errors</caption>
+       * res.badRequest([{ field: "email", message: "Email is required" }], "Bad Request");
+       * @example <caption>Using an options object(Note use keys according to your config)</caption>
+       * res.badRequest({ errors: [{ field: "email", message: "Email is required" }], message: "Bad Request" });
+       */
       badRequest: (
         errors?: any[],
         message?: string,
         statusCode?: number
       ) => void;
+      /**
+       * Send a 422 Validation Failed response with optional errors and message.
+       * @param errors
+       * @param message
+       * @param statusCode
+       * @example <caption>Using a list of errors</caption>
+       * res.failValidation([{ field: "email", message: "Email is required" }], "Validation failed");
+       * @example <caption>Using an options object(Note use keys according to your config)</caption>
+       * res.failValidation({ errors: [{ field: "email", message: "Email does not exist" }], message: "Validation failed" });
+       */
       failValidation: (
         errors?: any[],
         message?: string,
         statusCode?: number
       ) => void;
+      /**
+       * Send a 404 Not Found response with an optional message.
+       * @param message
+       * @param statusCode
+       * @example <caption>Using a custom message</caption>
+       * res.notFound("Item not found", 404);
+       * @example <caption>Using an options object(Note use keys according to your config)</caption>
+       * res.notFound({ message: "Item not found", statusCode: 404 });
+       */
       notFound: (message?: string, statusCode?: number) => void;
+      /**
+       * Send a 401 Unauthorized response with an optional message and errors.
+       * @param message
+       * @param statusCode
+       * @param errors
+       * @example <caption>Using a custom message</caption>
+       * res.unauthorized("Unauthorized access", 401, [{ field: "token", message: "Token is invalid" }]);
+       * @example <caption>Using an options object(Note use keys according to your config)</caption>
+       * res.unauthorized({ message: "Unauthorized access", statusCode: 401, errors: [...] });
+       */
       unauthorized: (
         message?: string,
         statusCode?: number,
@@ -651,15 +700,41 @@ let config: IResponseConfig = {
  * - `pagination`: Configuration for pagination, including keys for
  * @example
  * // Configure the response handler with custom settings
- * configureResponse({
-  *   safeInput: false,
-  *  defaultStatusCodes: {
-  *    success: 201,
-  *    created: 201,
-  *    updated: 201,
-  *   deleted: 204,
-  *    error: 500,
- })
+ {
+  safeInput: true, // I suggest keeping this true for safety, 
+  // dont change it unless you really need parameter style input.
+  successKey: "success",
+  messageKey: "message",
+  dataKey: "data",
+  errorKey: "errors",
+  codeKey: "statusCode",
+  defaultStatusCodes: {
+    success: 200,
+    created: 201,
+    updated: 200,
+    deleted: 204,
+    error: 500,
+    badRequest: 400,
+    validation: 422,
+    unauthorized: 401,
+    notFound: 404,
+  },
+  enableLogs: false,
+  showStack: true,
+  logger: console,
+  pagination: {
+    enabled: true,
+    keys: {
+      total: "total",
+      page: "page",
+      limit: "limit",
+      totalPages: "totalPages",
+      hasNextPage: "hasNextPage",
+      hasPrevPage: "hasPrevPage",
+      nextCursor: "nextCursor",
+    },
+  },
+};
  */
 
 export const configureResponse = (
@@ -675,6 +750,13 @@ export const configureResponse = (
   };
 };
 
+/**
+ * Returns a string containing the current stack trace, with all lines
+ * removed that include the strings "node_modules" or "responseHandler". This
+ * is used to generate a clean stack trace for error responses.
+ *
+ * @returns {string} A clean stack trace string.
+ */
 const getCleanStack = (): string => {
   const raw = new Error().stack?.split("\n").slice(2) || [];
   return raw
@@ -685,6 +767,27 @@ const getCleanStack = (): string => {
     .join("\n");
 };
 
+/**
+ * Enforces a specific input pattern for response methods, depending on the
+ * value of the `safeInput` configuration option.
+ *
+ * If `safeInput` is `true`, this function will throw an error if the input
+ * does not conform to the following pattern:
+ *
+ * - The first argument must be an object with the following keys:
+ *   - `message`: A string error message.
+ *   - `code`: An HTTP status code.
+ *   - `meta`: An optional object containing pagination data
+ *   - `data`: An optional value to be returned as the response data.
+ *   - `errors`: An optional array of error strings.
+ *
+ * If `safeInput` is `false`, this function will throw an error if the input
+ * is an object with any of the above keys.
+ *
+ * @param {IArguments} args - The arguments passed to the response method.
+ * @param {string} method - The name of the response method.
+ * @param {string[]} allowedKeys - An array of allowed keys for the input object.
+ */
 const enforceInputPattern = (
   args: IArguments,
   method: string,
