@@ -508,32 +508,70 @@
 // File: src/responseHandler.ts
 import { Request, Response, NextFunction } from "express";
 
-import {
-  IResponseConfig,
-} from "./interface/response";
+import { IResponseConfig } from "./interface/response";
 
 // Extend express Response interface
 declare global {
   namespace Express {
     interface Response {
+      /**
+       * Send a success response with optional data, message, code, and pagination meta.
+       * @param data 
+       * @param message 
+       * @param statusCode 
+       * @param meta 
+       * @example <caption>Using data directly</caption>
+       * res.success({ id: 1, name: "Item" }, "Item found", 200, { total: 1 });
+       * @example <caption>Using an options object</caption>
+       * res.success({ data: { id: 1, name: "Item" }, message: "Item found", statusCode: 200, meta: { total: 1 } });
+       */
       success: (
         data?: any,
         message?: string,
         statusCode?: number,
         meta?: any
       ) => void;
+      /**
+       * Send a created response with optional data, message, and pagination meta.
+       * @param data 
+       * @param message 
+       * @param meta 
+       * @example <caption>Using data directly</caption>
+       * res.created({ id: 1, name: "Item" }, "Item created", { total: 1 });
+       * @example <caption>Using an options object</caption>
+       * res.created({ data: { id: 1, name: "Item" }, message: "Item created", meta: { total: 1 } });
+       */
       created: (
         data?: any,
         message?: string,
         statusCode?: number,
         meta?: any
       ) => void;
+      /**
+       * Send an updated response with optional data, message, and pagination meta.
+       * @param data 
+       * @param message 
+       * @param meta 
+       * @example <caption>Using data directly</caption>
+       * res.updated({ id: 1, name: "Item" }, "Item updated", { total: 1 });
+       * @example <caption>Using an options object</caption>
+       * res.updated({ data: { id: 1, name: "Item" }, message: "Item updated", meta: { total: 1 } });
+       */
       updated: (
         data?: any,
         message?: string,
         statusCode?: number,
         meta?: any
       ) => void;
+      /**
+       * Send a deleted response with an optional message and status code.
+       * @param message
+       * @param statusCode
+       * @example <caption>Using a custom message</caption>
+       * res.deleted("Item deleted", 200);
+       * @example <caption>Using an options object</caption>
+       * res.deleted({ message: "Item deleted", statusCode: 200 });
+       */
       deleted: (message?: string, statusCode?: number) => void;
       error: (message?: string, statusCode?: number, errors?: any[]) => void;
       badRequest: (
@@ -591,7 +629,42 @@ let config: IResponseConfig = {
   },
 };
 
-export const configureResponse = (userConfig: Partial<IResponseConfig> = {}) => {
+/**
+ * Updates the global response configuration with user-defined settings.
+ * 
+ * This function merges the existing configuration with any new settings
+ * provided by the user. It allows customization of default status codes
+ * and other response-related configurations.
+ *
+ * @param {Partial<IResponseConfig>} userConfig - An object containing
+ * user-defined configuration options. This parameter is optional, and
+ * any properties not specified will retain their existing values.
+ * Valid keys include:
+ * - `safeInput`: Whether to enforce safe input patterns. Default is `true`.
+ * - `defaultStatusCodes`: An object containing default status codes for
+ * different response types. Default is `{ success: 200, created: 201,
+ * updated: 200, deleted: 204, error: 500 }`.
+ * - `enableLogs`: Whether to enable logging. Default is `false`.
+ * - `showStack`: Whether to include the stack trace in the response.
+ * Default is `true`.
+ * - `logger`: The logger to use for logging. Default is `console`.
+ * - `pagination`: Configuration for pagination, including keys for
+ * @example
+ * // Configure the response handler with custom settings
+ * configureResponse({
+  *   safeInput: false,
+  *  defaultStatusCodes: {
+  *    success: 201,
+  *    created: 201,
+  *    updated: 201,
+  *   deleted: 204,
+  *    error: 500,
+ })
+ */
+
+export const configureResponse = (
+  userConfig: Partial<IResponseConfig> = {}
+) => {
   config = {
     ...config,
     ...userConfig,
@@ -696,7 +769,7 @@ export const responseMiddleware = (
       res.status(code).json(response);
     };
   };
-
+  
   res.success = defineMethod(
     "success",
     [config.dataKey, config.messageKey, config.codeKey, "meta"],
