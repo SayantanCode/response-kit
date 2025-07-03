@@ -643,7 +643,7 @@ declare global {
   }
 }
 
-let config: IResponseConfig = {
+export let config: IResponseConfig = {
   safeInput: true,
   successKey: "success",
   messageKey: "message",

@@ -1,7 +1,8 @@
 // src/utils/paginateMongoose.ts
 
 import { FilterQuery, Model } from "mongoose";
-import { MongoosePaginatedResult } from "../interface/paginateMongoose";
+import { MongoosePaginatedResult, OffsetMeta, CursorMeta } from "../interface/paginateMongoose";
+import { config } from "../responseHandler";
 
 /**
  * Paginates a Mongoose query result set, supporting both cursor-based and offset-based pagination.
@@ -48,6 +49,9 @@ const paginateMongoose = async <T extends Document>(
   const populate = options.populate || "";
   const cursorField = options.cursorField || "_id";
 
+  // Get pagination keys from the global config
+  const keys = config.pagination!.keys!;
+
   if (options.nextCursor) {
     // Cursor-based pagination
     const cursorQuery: FilterQuery<T> = {
@@ -68,15 +72,18 @@ const paginateMongoose = async <T extends Document>(
       ? data[data.length - 1].get(cursorField)?.toString?.() || null
       : null;
 
+    // Build the meta object using dynamic keys
+    const meta: CursorMeta = { // Explicitly type the meta object as CursorMeta
+      mode: "cursor",
+      [keys.limit as string]: limit,
+      cursorField: cursorField, // This key is not dynamic, so use its literal name
+      [keys.nextCursor as string]: nextCursor,
+      [keys.hasNextPage as string]: hasNextPage,
+    } as CursorMeta; // Assert the type
+
     return {
       data,
-      meta: {
-        mode: "cursor",
-        limit,
-        cursorField,
-        nextCursor,
-        hasNextPage,
-      },
+      meta, // Now meta is typed correctly as CursorMeta
     };
   }
 
@@ -97,18 +104,22 @@ const paginateMongoose = async <T extends Document>(
 
   const totalPages = Math.ceil(total / limit);
 
+  // Build the meta object using dynamic keys
+  const meta: OffsetMeta = { // Explicitly type the meta object as OffsetMeta
+    mode: "offset",
+    [keys.total as string]: total,
+    [keys.page as string]: page,
+    [keys.limit as string]: limit,
+    [keys.totalPages as string]: totalPages,
+    [keys.hasNextPage as string]: page < totalPages,
+    [keys.hasPrevPage as string]: page > 1,
+  } as unknown as OffsetMeta; // Assert the type
+
   return {
     data,
-    meta: {
-      mode: "offset",
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
-    },
+    meta, // Now meta is typed correctly as OffsetMeta
   };
 };
 
 export default paginateMongoose;
+
