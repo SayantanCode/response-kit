@@ -106,4 +106,4 @@ const paginateArray = <T>(
   };
 };
 
-export default paginateArray;
+export { paginateArray } 
